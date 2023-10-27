@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: ./flask-app
+      dockerfile: Dockerfile
+    container_name: todo-flask-container
+    ports:
+      - 5000:5000
+    command: bash -c "flask run --host=0.0.0.0 --port=5000"
+    depends_on:
+      - db
+    networks:
+      - todo-network
+    restart: always
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: todo-db-container
+    ports:
+      - 5435:5432
+    volumes:
+      - todo-volume:/var/lib/postgresql/data
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    name: todo-network
+
+volumes:
+  todo-volume:
+    name: todo-volume
