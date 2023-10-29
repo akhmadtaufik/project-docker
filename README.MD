@@ -110,3 +110,108 @@ COPY init.sql /docker-entrypoint-initdb.d/
 
 EXPOSE 5432
 ```
+
+- `FROM postgres:15.4`: This line specifies the base image for the Docker container. In this case, it’s using the official PostgreSQL image version 15.4.
+
+- `ENV POSTGRES_USER=postgres`: This line sets an environment variable in the Docker image. Here, it’s setting the PostgreSQL username to `postgres`.
+
+- `ENV POSTGRES_PASSWORD=secretpass`: This line sets the PostgreSQL password to `secretpass`.
+
+- `ENV POSTGRES_DB=todo-db`: This line sets the PostgreSQL database name to `todo-db`.
+
+- `COPY init.sql /docker-entrypoint-initdb.d/`: This line copies the `init.sql` file from your current directory to `/docker-entrypoint-initdb.d/` in the Docker image. The scripts in this directory are automatically executed upon container startup.
+
+- `EXPOSE 5432`: This line tells Docker to expose port 5432 from the Docker container to your local system. This is typically used for network communication between your Docker container and your local system.
+
+After building a Docker image using this Dockerfile, you can run your PostgreSQL service in a Docker container with isolated dependencies and network configuration.
+
+### Installation
+#### Git Clone
+Clone this repository to your local machine using the following command:
+```sh
+git clone https://github.com/akhmadtaufik/project-docker.git
+```
+#### Docker Compose File
+Here’s an example of a `docker-compose.yml` file:
+```yml
+version: '3.8'
+services:
+  app:
+    build:
+      context: ./flask-app
+      dockerfile: Dockerfile
+    container_name: todo-flask-container
+    ports:
+      - 5000:5000
+    command: bash -c "flask run --host=0.0.0.0 --port=5000"
+    depends_on:
+      - db
+    networks:
+      - todo-network
+    restart: always
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: todo-db-container
+    ports:
+      - 5435:5432
+    volumes:
+      - todo-volume:/var/lib/postgresql/data
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    name: todo-network
+
+volumes:
+  todo-volume:
+    name: todo-volume
+```
+The Docker Compose file you provided is designed to orchestrate the deployment of a multi-container application, specifically a Flask application and a PostgreSQL database. It uses version 3.8 of the Docker Compose file format.
+
+The `app` service is built from a Dockerfile located in the `./flask-app` directory. The resulting container is named `todo-flask-container` and exposes port 5000 for network communication. The Flask application is started with the command `flask run --host=0.0.0.0 --port=5000`. This service depends on the `db` service and is connected to the `todo-network`. The `restart: always` policy ensures that the container restarts automatically if it stops.
+
+The `db` service is built from a Dockerfile located in the `./db` directory. The resulting container, named `todo-db-container`, exposes port 5432 (mapped to port 5435 on the host) for network communication. It also mounts a volume named `todo-volume` at `/var/lib/postgresql/data` for data persistence.
+
+Both services are connected through a network named `todo-network`, and data persistence is achieved through a volume named `todo-volume`. This setup ensures that the Flask application and PostgreSQL database can communicate with each other while maintaining data persistence.
+
+#### Run the Docker Compose
+Here are the updated step-by-step instructions to run the Docker Compose:
+
+1. Open your terminal.
+
+2. Navigate to the directory containing your docker-compose.yml file.
+
+3. Run the following command to start the db service first:
+    ```sh
+    docker-compose up -d db
+    ```
+
+    This command will start the PostgreSQL database service defined in your docker-compose.yml file in detached mode (the -d option), meaning it will run in the background.
+
+4. Once the db service is up and running, you can start the app service with the following command:
+    ```sh
+    docker-compose up -d app
+    ```
+
+    This command will start the Flask application service.
+
+5. To check if your services are running, you can use the following command:
+    ```sh
+    docker-compose ps
+    ```
+    
+    This will show you the status of your containers.
+
+6. Now, your Flask application should be accessible at `http://localhost:5000`, and your PostgreSQL database should be accessible at `localhost:5435`.
+
+7. If you make any changes to your application or database, you can update the running containers by running `docker-compose up -d` again.
+
+Also, note that it’s crucial to start the db service before the app service because the application depends on the database to be fully operational.
+
+## Backup and Restore
+### Backup
+### Restore
