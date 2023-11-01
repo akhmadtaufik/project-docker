@@ -2,17 +2,24 @@
 
 ## Overview
 
-This documentation provides detailed instructions for setting up and running a web application using Docker Compose. The application consists of two services: an app service created with Flask and a database service using PostgreSQL.
+As prospective Software & Data Engineers, one of the primary challenges encountered is the successful deployment of projects. This documentation serves as a comprehensive guide addressing this challenge, focusing on the setup and execution of a web application utilizing Docker Compose. The scope of this guide, specifically the Linux and Container Project, is confined to the deployment of a pre-existing web application developed by the Pacmann team, and configurations pertaining to Docker and Linux. The application in question is composed of two integral services: a Flask-based app service and a PostgreSQL database service.
+
+## Project Objective
+This project comprises two primary components:
+1. **Deployment**: The deployment of this application utilises Docker as the principal tool. Participants are required to create two images essential for running the application. These images include:
+    - An image for the Flask application.
+    - An image for the PostgreSQL database. The Flask application image is dependent on the PostgreSQL image due to the Flask application’s requirement for a connection to the PostgreSQL database upon execution.
+2. **Automated Data Backup Scheduling**: In addition to deployment tasks, a crucial component of this project is the establishment of an automatic data backup schedule for the PostgreSQL database. This backup operation, conducted daily, is a key measure to ensure the security and reliability of data. To further enhance data protection, a specialised script will be developed for restoring data from these backups. This feature ensures a swift recovery of data, mitigating potential losses in the event of database failure or damage.
 
 ## Prerequisites
 
-Before you proceed with running the application, make sure you have the following prerequisites installed on your system:
+Before running the application, please ensure the necessary prerequisites are installed on your system.
 
-- Docker: Docker is a platform that uses OS-level virtualization to deliver software in packages called containers. You can download and install Docker from here.
-- Docker Compose: Docker Compose is a tool for defining and running multi-container Docker applications.
+- **Docker**: Docker is a sophisticated platform that employs OS-level virtualization to deliver software in packages, referred to as containers. Docker can be downloaded and installed from the provided link.
+- **Docker Compose**: Docker Compose is a tool designed for defining and running multi-container Docker applications. It is essential for the successful operation of this application.
 
 ## Project Sturture
-The project structure is organized as follows:
+The organization of the project structure is as follows:
 ```
 .
 ├── backup
@@ -44,14 +51,14 @@ The project structure is organized as follows:
 
 ```
 
-## Setup and Installation
-### Setup
-#### Tools
-- Python: The programming language used to develop the Flask application.
-- PostgreSQL: The database management system used to store and manage the application’s data.
-- Dbeaver: A database management tool used for database administration.
-#### Prerequisites
-The `requirements.txt` file lists the Python dependencies that need to be installed. Here are the contents of the `requirements.txt` file:
+## Configuration and Installation
+### Configuration
+#### Instruments
+- **Python**: The programming language employed for the development of the Flask application.
+- **PostgreSQL**: The database management system utilized for the storage and management of the application's data.
+- **Dbeaver**: A database management instrument applied for database administration.
+#### Requirements
+The `requirements.txt` file enumerates the Python dependencies that necessitate installation. The contents of the `requirements.txt` file are as follows:
 - blinker==1.6.3
 - click==8.1.7
 - colorama==0.4.6
@@ -71,8 +78,8 @@ The `requirements.txt` file lists the Python dependencies that need to be instal
 - Werkzeug==3.0.1
 - zipp==3.17.0
 
-#### Image for Flask
-The Dockerfile for the Flask application is as follows:
+#### Flask Image
+The Dockerfile for the Flask application is structured as follows:
 ```Dockerfile
 FROM python:3.9.16
 
@@ -85,20 +92,20 @@ RUN pip install -r requirements.txt
 EXPOSE 5000
 
 ```
-- `FROM python:3.9.16`: This line specifies the base image for the Docker container. In this case, it’s using the official Python image version 3.9.16.
+- `FROM python:3.9.16`: This directive designates the base image for the Docker container, which in this instance is the official Python image version 3.9.16.
 
-- `COPY . ./todo-app`: This line copies the current directory (on your local system) into the Docker image. The `.` represents the current directory, and `./todo-app` is the destination in the Docker image.
+- `COPY . ./todo-app`: This directive copies the current directory from your local system into the Docker image. The `.` symbolizes the current directory, while `./todo-app` denotes the destination within the Docker image.
  
-- `WORKDIR /todo-app`: This line sets the working directory in the Docker image to `/todo-app`. All subsequent commands (like the `RUN` command) will be run in this directory.
+- `WORKDIR /todo-app`: This directive establishes `/todo-app` as the working directory within the Docker image. All subsequent directives (such as the `RUN` directive) will be executed within this directory.
 
-- `RUN pip install -r requirements.txt`: This line installs the Python dependencies for your application. It assumes that you have a `requirements.txt` file in your current directory.
+- `RUN pip install -r requirements.txt`: This directive installs the Python dependencies for your application, predicated on the presence of a `requirements.txt` file within your current directory.
 
-- `EXPOSE 5000`: This line tells Docker to expose port 5000 from the Docker container to your local system. This is typically used for network communication between your Docker container and your local system.
+- `EXPOSE 5000`: This directive instructs Docker to expose port 5000 from the Docker container to your local system, typically facilitating network communication between your Docker container and your local system.
 
-After building a Docker image using this Dockerfile, you can run your application in a Docker container with isolated dependencies and network configuration.
+Upon constructing a Docker image using this Dockerfile, you can execute your application within a Docker container with isolated dependencies and network configuration.
 
-#### Image for PostgreSQL
-The Dockerfile for the PostgreSQL service is as follows:
+#### PostgreSQL Image
+The Dockerfile for the PostgreSQL service is structured as follows:
 ```Dockerfile
 FROM postgres:15.4
 
@@ -110,29 +117,28 @@ COPY init.sql /docker-entrypoint-initdb.d/
 
 EXPOSE 5432
 ```
+- `FROM postgres:15.4`: This directive designates the base image for the Docker container, which in this instance is the official PostgreSQL image version 15.4.
 
-- `FROM postgres:15.4`: This line specifies the base image for the Docker container. In this case, it’s using the official PostgreSQL image version 15.4.
+- `ENV POSTGRES_USER=postgres`: This directive establishes an environment variable within the Docker image, setting the PostgreSQL username to `postgres`.
 
-- `ENV POSTGRES_USER=postgres`: This line sets an environment variable in the Docker image. Here, it’s setting the PostgreSQL username to `postgres`.
+- `ENV POSTGRES_PASSWORD=secretpass`: This directive sets the PostgreSQL password to `secretpass`.
 
-- `ENV POSTGRES_PASSWORD=secretpass`: This line sets the PostgreSQL password to `secretpass`.
+- `ENV POSTGRES_DB=todo-db`: This directive sets the PostgreSQL database name to `todo-db`.
 
-- `ENV POSTGRES_DB=todo-db`: This line sets the PostgreSQL database name to `todo-db`.
+- `COPY init.sql /docker-entrypoint-initdb.d/`: This directive copies the `init.sql` file from your current directory to `/docker-entrypoint-initdb.d/` within the Docker image. Scripts located within this directory are automatically executed upon container startup.
 
-- `COPY init.sql /docker-entrypoint-initdb.d/`: This line copies the `init.sql` file from your current directory to `/docker-entrypoint-initdb.d/` in the Docker image. The scripts in this directory are automatically executed upon container startup.
+- `EXPOSE 5432`: This directive instructs Docker to expose port 5432 from the Docker container to your local system, typically facilitating network communication between your Docker container and your local system.
 
-- `EXPOSE 5432`: This line tells Docker to expose port 5432 from the Docker container to your local system. This is typically used for network communication between your Docker container and your local system.
+Upon constructing a Docker image using this Dockerfile, you can execute your PostgreSQL service within a Docker container with isolated dependencies and network configuration.
 
-After building a Docker image using this Dockerfile, you can run your PostgreSQL service in a Docker container with isolated dependencies and network configuration.
-
-### Installation
-#### Git Clone
-Clone this repository to your local machine using the following command:
+### Configuration and Execution
+#### Repository Cloning
+Clone this repository to your local machine utilizing the following command:
 ```sh
-git clone https://github.com/akhmadtaufik/project-docker.git
+git clone https://github.com/akhmadtaufik/project-docker
 ```
 #### Docker Compose File
-Here’s an example of a `docker-compose.yml` file:
+The provided `docker-compose.yml` file is structured as follows:
 ```yml
 version: '3.8'
 services:
@@ -170,47 +176,47 @@ volumes:
   todo-volume:
     name: todo-volume
 ```
-The Docker Compose file you provided is designed to orchestrate the deployment of a multi-container application, specifically a Flask application and a PostgreSQL database. It uses version 3.8 of the Docker Compose file format.
+The Docker Compose file orchestrates the deployment of a multi-container application, specifically a Flask application and a PostgreSQL database, using version 3.8 of the Docker Compose file format.
 
-The `app` service is built from a Dockerfile located in the `./flask-app` directory. The resulting container is named `todo-flask-container` and exposes port 5000 for network communication. The Flask application is started with the command `flask run --host=0.0.0.0 --port=5000`. This service depends on the `db` service and is connected to the `todo-network`. The `restart: always` policy ensures that the container restarts automatically if it stops.
+The `app` service is built from a Dockerfile located in the `./flask-app` directory, resulting in a container named `todo-flask-container` that exposes port 5000 for network communication. The Flask application is initiated with the command `flask run --host=0.0.0.0 --port=5000`. This service depends on the `db` service and is connected to the `todo-network`. The `restart: always` policy ensures that the container restarts automatically if it stops.
 
-The `db` service is built from a Dockerfile located in the `./db` directory. The resulting container, named `todo-db-container`, exposes port 5432 (mapped to port 5435 on the host) for network communication. It also mounts a volume named `todo-volume` at `/var/lib/postgresql/data` for data persistence.
+The `db` service is built from a Dockerfile located in the `./db` directory, resulting in a container named `todo-db-container` that exposes port 5432 (mapped to port 5435 on the host) for network communication. It also mounts a volume named `todo-volume` at `/var/lib/postgresql/data` for data persistence.
 
 Both services are connected through a network named `todo-network`, and data persistence is achieved through a volume named `todo-volume`. This setup ensures that the Flask application and PostgreSQL database can communicate with each other while maintaining data persistence.
 
-#### Run the Docker Compose
-Here are the updated step-by-step instructions to run the Docker Compose:
+#### Execution of Docker Compose
+Follow these instructions to execute Docker Compose:
 
 1. Open your terminal.
 
 2. Navigate to the directory containing your docker-compose.yml file.
 
-3. Run the following command to start the db service first:
+3. Execute the following command to initiate the db service first:
     ```sh
     docker-compose up -d db
     ```
 
-    This command will start the PostgreSQL database service defined in your docker-compose.yml file in detached mode (the -d option), meaning it will run in the background.
+   This command initiates the PostgreSQL database service defined in your docker-compose.yml file in detached mode (the -d option), allowing it to run in the background.
 
-4. Once the db service is up and running, you can start the app service with the following command:
+4. Once the db service is operational, initiate the app service with the following command:
     ```sh
     docker-compose up -d app
     ```
 
-    This command will start the Flask application service.
+   This command initiates the Flask application service.
 
-5. To check if your services are running, you can use the following command:
+5. To verify if your services are operational, use the following command:
     ```sh
     docker-compose ps
     ```
     
-    This will show you the status of your containers.
+   This will display the status of your containers.
 
-6. Now, your Flask application should be accessible at `http://localhost:5000`, and your PostgreSQL database should be accessible at `localhost:5435`.
+6. Your Flask application should now be accessible at `http://localhost:5000`, and your PostgreSQL database should be accessible at `localhost:5435`.
 
-7. If you make any changes to your application or database, you can update the running containers by running `docker-compose up -d` again.
+7. If you make any modifications to your application or database, you can update the running containers by executing `docker-compose up -d` again.
 
-Also, note that it’s crucial to start the db service before the app service because the application depends on the database to be fully operational.
+Please note that it’s crucial to initiate the db service prior to the app service because the application depends on the database being fully operational.
 
 ## Backup and Restore
 ### Backup
