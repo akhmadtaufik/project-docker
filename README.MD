@@ -219,5 +219,91 @@ Follow these instructions to execute Docker Compose:
 Please note that it’s crucial to initiate the db service prior to the app service because the application depends on the database being fully operational.
 
 ## Backup and Restore
-### Backup
-### Restore
+### Database Backup
+
+#### Backup Script
+
+The backup process is automated using a bash script named `backup.sh`. This script performs a backup of the database within the Docker container and saves it to a specified location. The script is as follows:
+
+```bash
+#!/bin/bash
+
+# Obtain the current date in YYMMDD format
+TIMESTAMP=$(date +%y%m%d)
+
+# Backup the database using pg_dumpall via docker exec
+docker exec todo-db-container bash -c "pg_dumpall -U postgres > /backups/backup_$TIMESTAMP.sql"
+
+# Check if pg_dumpall was successful or failed
+if [ $? -eq 0 ]; then
+    echo "Backup successful on $TIMESTAMP."
+else
+    echo "Backup failed on $TIMESTAMP."
+fi
+```
+
+The script operates by obtaining the current date in the `YYMMDD` format and storing it in the `TIMESTAMP` variable. It then uses `docker exec` to run `pg_dumpall` within the `todo-db-container` Docker container, outputting the result to a SQL file named `backup_$TIMESTAMP.sql` in the `/backups` directory. The script then checks whether `pg_dumpall` was successful or not, outputting a message accordingly.
+
+#### Scheduling Backups with Crontab
+
+The `backup.sh` script is scheduled to run automatically using crontab. The following line is added to the crontab configuration to schedule the script to run daily at midnight:
+
+```bash
+0 0 * * * /home/phy/LinuxAndContainer/web-app/backup.sh >> /home/phy/LinuxAndContainer/web-app/logs/cron.log 2>&1
+```
+
+This line schedules `backup.sh` to run at midnight every day (indicated by `0 0 * * *`). The output of the script, including any errors, is redirected to a log file located at `/home/phy/LinuxAndContainer/web-app/logs/cron.log`.
+
+This setup ensures that backups are created regularly and that any issues with the backup process are logged for review.
+
+### Database Restoration
+
+#### Restoration Script
+
+The restoration process is automated using a bash script named `restore.sh`. This script performs a restoration of the database within the Docker container from a specified backup file. The script is as follows:
+
+```bash
+#!/bin/bash
+
+# Environment Variables
+DB_USER="postgres"
+DB_PASSWORD=$POSTGRES_PASSWORD
+DB_NAME="todo-db"
+CONTAINER_NAME="todo-db-container"
+BACKUP_DIR="/backups"
+
+# Create timestamp
+TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+LOG_FILE="/home/phy/LinuxAndContainer/web-app/logs/restore_$TIMESTAMP.log"
+
+# Display list of backup files
+echo "$(date +"%Y-%m-%d %H:%M:%S") List of backup files:" | tee -a $LOG_FILE
+docker exec $CONTAINER_NAME ls $BACKUP_DIR | tee -a $LOG_FILE
+
+# Ask user to enter the name of the backup file
+read -p "Enter the name of the backup file you want to restore: " BACKUP_FILE
+
+# Create full path to backup file
+BACKUP_PATH="$BACKUP_DIR/$BACKUP_FILE"
+
+# Check if backup file exists
+if docker exec $CONTAINER_NAME test -f $BACKUP_PATH; then
+    echo "$(date +"%Y-%m-%d %H:%M:%S") Backup file found." | tee -a $LOG_FILE
+else
+    echo "$(date +"%Y-%m-%d %H:%M:%S") Backup file not found. Restoration process cancelled." | tee -a $LOG_FILE >&2
+    exit 1
+fi
+
+# Command to restore database
+if docker exec -i $CONTAINER_NAME bash -c "psql -U $DB_USER -d $DB_NAME < $BACKUP_PATH"; then
+    echo "$(date +"%Y-%m-%d %H:%M:%S") Database restoration successful." | tee -a $LOG_FILE
+else
+    echo "$(date +"%Y-%m-%d %H:%M:%S") Database restoration failed." | tee -a $LOG_FILE >&2
+fi
+```
+
+The script operates by obtaining the current date and time, storing it in the `TIMESTAMP` variable, and creating a log file named `restore_$TIMESTAMP.log` in the `/home/phy/LinuxAndContainer/web-app/logs/` directory. It then displays a list of available backup files and prompts the user to enter the name of the backup file they wish to restore. If the specified backup file exists, it uses `psql` within the `todo-db-container` Docker container to restore the database from the backup file. The script then checks whether `psql` was successful or not, outputting a message accordingly.
+
+#### Running the Restoration Script
+
+To run the restoration script, open your terminal, navigate to the directory containing your `restore.sh` file, and execute it using `./restore.sh`. Follow the prompts to enter the name of the backup file you wish to restore.
