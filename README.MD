@@ -307,3 +307,11 @@ The script operates by obtaining the current date and time, storing it in the `T
 #### Running the Restoration Script
 
 To run the restoration script, open your terminal, navigate to the directory containing your `restore.sh` file, and execute it using `./restore.sh`. Follow the prompts to enter the name of the backup file you wish to restore.
+
+## References
+
+For a more detailed explanation, please refer to the Medium article linked below:
+
+[Deployment and Data Backup with Docker Compose: A Comprehensive Guide](https://medium.com/@akhmadtaufik/mengoptimalkan-deployment-aplikasi-web-flask-postgresql-dan-docker-compose-7a2a67c573b9)
+
+In the article, you will find a complete guide, along with step-by-step instructions for deploying a Flask application and PostgreSQL database, as well as setting up automated data backups and restores. This resource will provide a comprehensive understanding of the deployment process and data management.
